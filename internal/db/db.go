@@ -1,8 +1,11 @@
 package db
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"os"
+	"strconv"
 
 	"github.com/bajalnyt/go-grpc-services-course/internal/rocket"
 
@@ -32,11 +35,43 @@ func New() (Store, error) {
 }
 
 func (s Store) GetRocketById(id string) (rocket.Rocket, error) {
-	return rocket.Rocket{}, nil
+	var rkt rocket.Rocket
+	integer_id, err := strconv.Atoi(id)
+	if err != nil {
+		log.Print(err.Error())
+		return rocket.Rocket{}, err
+	}
+	row := s.db.QueryRow(
+		`SELECT ID from rockets where id=$1`,
+		integer_id,
+	)
+	err = row.Scan(&rkt.ID)
+	if err != nil {
+		log.Print(err.Error())
+		return rocket.Rocket{}, err
+	}
+
+	return rkt, nil
 }
+
+// InsertRocket - inserts a rocket into the rockets table
 func (s Store) InsertRocket(rkt rocket.Rocket) (rocket.Rocket, error) {
-	return rocket.Rocket{}, nil
+	_, err := s.db.NamedQuery(
+		`INSERT INTO rockets
+		(id, name, type)
+		VALUES (:id, :name, :type)`,
+		rkt,
+	)
+	if err != nil {
+		return rocket.Rocket{}, errors.New("failed to insert into database")
+	}
+	return rocket.Rocket{
+		ID:   rkt.ID,
+		Type: rkt.Type,
+		Name: rkt.Name,
+	}, nil
 }
+
 func (s Store) DeleteRocketById(id string) error {
 	return nil
 }
