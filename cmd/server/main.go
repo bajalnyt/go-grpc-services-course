@@ -5,6 +5,7 @@ import (
 
 	"github.com/bajalnyt/go-grpc-services-course/internal/db"
 	"github.com/bajalnyt/go-grpc-services-course/internal/rocket"
+	"github.com/bajalnyt/go-grpc-services-course/internal/transport/grpc"
 )
 
 // Run will init and start the gRPC server
@@ -20,7 +21,14 @@ func Run() error {
 		return err
 	}
 
-	_ = rocket.New(rocketStore)
+	rktService := rocket.New(rocketStore)
+
+	rktHandler := grpc.New(rktService)
+
+	if err := rktHandler.Serve(); err != nil {
+		log.Println("failed to start server")
+		return err
+	}
 
 	return nil
 }
